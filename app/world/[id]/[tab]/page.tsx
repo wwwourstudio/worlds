@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { WorldTabNav } from "@/components/world-tab-nav";
 
 interface Props {
   params: Promise<{ id: string; tab: string }>;
@@ -54,6 +55,8 @@ export default async function WorldTabPage({ params }: Props) {
         title={config.title}
         description={config.description}
       />
+
+      <WorldTabNav id={id} />
 
       <div className="border border-white/10 p-12">
         <div className="mb-4 font-mono text-xs uppercase tracking-widest text-white/20">

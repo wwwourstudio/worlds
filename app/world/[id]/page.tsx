@@ -1,23 +1,9 @@
-import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { WorldTabNav } from "@/components/world-tab-nav";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-const tabs = [
-  { slug: "stakeholders", label: "Stakeholders" },
-  { slug: "dna", label: "DNA" },
-  { slug: "lineage", label: "Lineage" },
-  { slug: "governance", label: "Governance" },
-  { slug: "events", label: "Events" },
-  { slug: "history", label: "History" },
-  { slug: "zones", label: "Zones" },
-  { slug: "physics", label: "Physics" },
-  { slug: "civilization", label: "Civilization" },
-  { slug: "commerce", label: "Commerce" },
-  { slug: "vr", label: "VR" },
-];
 
 const metrics = [
   { label: "World Health", value: "94%", trend: "+2.1%" },
@@ -50,18 +36,7 @@ export default async function WorldDashboardPage({ params }: Props) {
         ))}
       </div>
 
-      {/* Tab navigation */}
-      <div className="mb-8 flex flex-wrap gap-1 border-b border-white/10 pb-4">
-        {tabs.map((t) => (
-          <Link
-            key={t.slug}
-            href={`/world/${id}/${t.slug}`}
-            className="border border-white/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/40 hover:text-white hover:border-white/30 transition-colors"
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div>
+      <WorldTabNav id={id} />
 
       {/* Overview content */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -87,9 +62,9 @@ export default async function WorldDashboardPage({ params }: Props) {
           <div className="mb-4 font-mono text-xs uppercase tracking-widest text-white/30">Energy Flow (24h)</div>
           <div className="space-y-2">
             {[
-              { label: "Generated", value: 820, max: 1000, color: "bg-green-400/40" },
-              { label: "Consumed", value: 640, max: 1000, color: "bg-red-400/40" },
-              { label: "Stored", value: 180, max: 1000, color: "bg-blue-400/40" },
+              { label: "Generated", value: 820, max: 1000, color: "bg-white/20" },
+              { label: "Consumed", value: 640, max: 1000, color: "bg-white/10" },
+              { label: "Stored", value: 180, max: 1000, color: "bg-white/30" },
             ].map((bar) => (
               <div key={bar.label}>
                 <div className="mb-1 flex justify-between font-mono text-xs">

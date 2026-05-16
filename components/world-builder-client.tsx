@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Maximize2, Users, EyeOff } from "lucide-react";
+import * as THREE from "three";
 
 const MODES = ["Builder", "Advisor", "Historian", "Optimizer"] as const;
 type Mode = (typeof MODES)[number];
@@ -18,6 +19,110 @@ const WELCOME: Message = {
     "Welcome to the AI World Builder. Just tell me what you want to create and I'll help you build it. Need a dragon? A medieval castle? A futuristic vehicle? Just ask—I have access to millions of 3D models.",
   time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
 };
+
+function WorldCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.z = 3;
+
+    // Planet wireframe
+    const geo = new THREE.IcosahedronGeometry(1, 4);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.08,
+    });
+    const planet = new THREE.Mesh(geo, mat);
+    scene.add(planet);
+
+    // Inner solid sphere
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0x0a0a0a,
+      transparent: true,
+      opacity: 0.95,
+    });
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.98, 32, 32), coreMat);
+    scene.add(core);
+
+    // Equatorial ring
+    const ringGeo = new THREE.TorusGeometry(1.25, 0.002, 2, 120);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2.5;
+    scene.add(ring);
+
+    // Star particles
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 800;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i++) {
+      starPos[i] = (Math.random() - 0.5) * 40;
+    }
+    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(
+      starGeo,
+      new THREE.PointsMaterial({ color: 0xffffff, size: 0.04, transparent: true, opacity: 0.4 })
+    );
+    scene.add(stars);
+
+    // Orbit markers
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const markerGeo = new THREE.SphereGeometry(0.025, 8, 8);
+      const markerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 });
+      const marker = new THREE.Mesh(markerGeo, markerMat);
+      marker.position.set(Math.cos(angle) * 1.25, 0, Math.sin(angle) * 1.25);
+      scene.add(marker);
+    }
+
+    function resize() {
+      const { clientWidth: w, clientHeight: h } = canvas!;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    let frame = 0;
+    let rafId: number;
+    function animate() {
+      rafId = requestAnimationFrame(animate);
+      frame++;
+      planet.rotation.y += 0.001;
+      planet.rotation.x += 0.0003;
+      ring.rotation.z += 0.0005;
+      stars.rotation.y -= 0.0001;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      ro.disconnect();
+      renderer.dispose();
+      geo.dispose();
+      mat.dispose();
+      coreMat.dispose();
+      ringGeo.dispose();
+      ringMat.dispose();
+      starGeo.dispose();
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="h-full w-full" />;
+}
 
 export default function WorldBuilderClient() {
   const [mode, setMode] = useState<Mode>("Builder");
@@ -108,7 +213,7 @@ export default function WorldBuilderClient() {
       </div>
 
       {/* 3D Canvas area */}
-      <div className="relative flex-1 bg-black">
+      <div className="relative flex-1 bg-black overflow-hidden">
         {sceneHidden ? (
           <div className="flex h-full items-center justify-center">
             <div className="font-mono text-xs uppercase tracking-widest text-white/20">
@@ -116,17 +221,7 @@ export default function WorldBuilderClient() {
             </div>
           </div>
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <div className="mb-4 h-px w-24 mx-auto bg-white/10" />
-              <div className="font-mono text-xs uppercase tracking-widest text-white/20">
-                3D Scene Canvas
-              </div>
-              <div className="mt-2 font-mono text-xs text-white/10">
-                Three.js renderer initializes at runtime
-              </div>
-            </div>
-          </div>
+          <WorldCanvas />
         )}
 
         {/* Floating controls */}
